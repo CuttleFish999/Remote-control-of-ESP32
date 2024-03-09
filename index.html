@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32控制</title>
+    <style>
+        /* 添加按鈕的初始樣式 */
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        /* 當按鈕處於活動狀態時的樣式 */
+        .active {
+            background-color: #4CAF50; /* 綠色 */
+            color: white;
+        }
+        /* 按鈕被禁用時的樣式 */
+        .disabled {
+            background-color: #ccc;
+            color: #666;
+        }
+    </style>
+    <script>
+        let currentState = '';
+
+        function sendCommand(command) {
+            // 更新當前狀態
+            currentState = command;
+            // 更新按鈕狀態和顏色
+            updateButtonStates();
+
+            // 使用fetch API發出請求
+            fetch(`/Door?status=${command}`)
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error('Request failed.');
+                    }
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    // 按鈕保持當前狀態的顏色，直到下次操作
+                    updateButtonStates();
+                });
+        }
+
+        function updateButtonStates() {
+            // 先將兩個按鈕設為非活動狀態
+            document.getElementById('openButton').classList.remove('active', 'disabled');
+            document.getElementById('closeButton').classList.remove('active', 'disabled');
+
+            // 根據當前狀態，改變相對應按鈕的顏色並禁用它
+            if (currentState === 'open') {
+                document.getElementById('openButton').classList.add('active');
+                document.getElementById('closeButton').classList.add('disabled');
+            } else if (currentState === 'close') {
+                document.getElementById('closeButton').classList.add('active');
+                document.getElementById('openButton').classList.add('disabled');
+            }
+        }
+    </script>
+</head>
+<body>
+<h1>ESP32</h1>
+<button id="openButton" onclick="sendCommand('open')">開門</button>
+<button id="closeButton" onclick="sendCommand('close')">關門</button>
+</body>
+</html>
